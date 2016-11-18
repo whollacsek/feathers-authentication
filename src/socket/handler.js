@@ -147,32 +147,34 @@ export default function setupSocketHandler(app, options, { feathersParams, provi
             // TODO (EK): Setup and tear down socket listeners to keep the entity
             // up to date that should be attached to the socket. Need to get the
             // entity or assignProperty
-            //
+            // 
+            
+            // app.passport._registeredStrategies = {
+            //   local: {
+            //     entity,
+            //     service
+            //   }
+            // };
+
+            const stategyOptions = app.passport._registeredStrategies[strategy];
+            const servicePath = strategyOptions.service;
+            const service = typeof servicePath === 'string' ? app.service(servicePath) : servicePath;
+
+            const updateEntity = function(data) {
+              if (data[service.id] === connection[strategyOptions.entity][service.id]) {
+                // Update the user
+              }
+            };
+
             // Remove old listeners to prevent leaks
-            // socket.off('users updated');
-            // socket.off('users patched');
-            // socket.off('users removed');
+            service.removeListener('updated', updateEntity);
+            service.removeListener('patched', updateEntity);
+            service.removeListener('removed', updateEntity);
 
             // Register new event listeners
-            // socket.on('users updated', data => {
-            //   if (data.id === id) {
-            //     let connection = feathersParams(socket);
-            //     connection.user = data;
-            //   }
-            // });
-
-            // socket.on('users patched', data => {
-            //   if (data.id === id) {
-            //     let connection = feathersParams(socket);
-            //     connection.user = data;
-            //   }
-            // });
-
-            // socket.on('users removed', data => {
-            //   if (data.id === id) {
-            //     logout();
-            //   }
-            // });
+            service.on('updated', updateEntity);
+            service.on('patched', updateEntity);
+            service.on('removed', updateEntity);
 
             app.emit('login', tokens, {
               provider,
